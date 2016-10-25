@@ -47,7 +47,9 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 	extern char entry[], etext[], edata[], end[];
 
 	cprintf("Special kernel symbols:\n");
-	cprintf("  entry  %08x (virt)  %08x (phys)\n", entry, entry - KERNBASE);
+	cprintf(" this is work 1 insert:\n");
+	cprintf(" this is hex number %02x  and this is oct number %02o \n" , 15,15);
+	cprintf("  entry  %08x (virt)  %08x (phys) \n ", entry, entry - KERNBASE);
 	cprintf("  etext  %08x (virt)  %08x (phys)\n", etext, etext - KERNBASE);
 	cprintf("  edata  %08x (virt)  %08x (phys)\n", edata, edata - KERNBASE);
 	cprintf("  end    %08x (virt)  %08x (phys)\n", end, end - KERNBASE);
