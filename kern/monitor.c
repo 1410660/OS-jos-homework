@@ -24,6 +24,7 @@ struct Command {
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{"backtrace","Display a listing of function call frame",mon_backtrace},
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
@@ -47,7 +48,9 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 	extern char entry[], etext[], edata[], end[];
 
 	cprintf("Special kernel symbols:\n");
-	cprintf("  entry  %08x (virt)  %08x (phys)\n", entry, entry - KERNBASE);
+	cprintf(" this is work 1 insert:\n");
+	cprintf(" this is hex number %02x  and this is oct number %02o \n" , 15,15);
+	cprintf("  entry  %08x (virt)  %08x (phys) \n ", entry, entry - KERNBASE);
 	cprintf("  etext  %08x (virt)  %08x (phys)\n", etext, etext - KERNBASE);
 	cprintf("  edata  %08x (virt)  %08x (phys)\n", edata, edata - KERNBASE);
 	cprintf("  end    %08x (virt)  %08x (phys)\n", end, end - KERNBASE);
@@ -60,6 +63,27 @@ int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
+	cprintf("start backtrace\n");
+	uint32_t eip;
+	uint32_t ebp = read_ebp();
+	uint32_t esp;
+	uint32_t args[5];
+	uint32_t i = 0;
+	while(ebp!=-1){
+		esp = ebp+8;
+		eip = *(uint32_t*)(ebp+4);
+		if(ebp==0){
+			ebp = -1;
+		}else{
+			ebp = *(uint32_t*)(ebp);
+		}
+		for(i=0;i<5;i++){
+		args[i] = *(uint32_t*)(esp+i*4);
+	        }
+                            cprintf("ebp  %08x   eip %08x   args  %08x  %08x  %08x  %08x  %08x\n",ebp,eip,args[0],args[1],args[2],args[3],args[4]);
+
+	}
+	
 	return 0;
 }
 
