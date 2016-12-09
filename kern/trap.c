@@ -25,6 +25,26 @@ struct Pseudodesc idt_pd = {
 	sizeof(idt) - 1, (uint32_t) idt
 };
 
+void Divide_error();
+void Debug();
+void Non_MaskableInterrupt();
+void Breakpoint();
+void Overflow();
+void BOUND_Range_Exceeded();
+void Invalid_Opcode();
+void Device_Not_Available();
+void Double_Fault();
+void Invalid_TSS();
+void Segment_Not_Present();
+void Stack_Fault();
+void General_Protection();
+void Page_Fault();
+void FPU_Floating_Point_Error();
+void Alignment_Check();
+void Machine_Check();
+void SIMD_Floating_Point_Exception();
+void systemcall_handler();
+
 
 static const char *trapname(int trapno)
 {
@@ -63,7 +83,26 @@ void
 trap_init(void)
 {
 	extern struct Segdesc gdt[];
-
+	SETGATE(idt[0],1,GD_KD,Divide_error,0);
+	SETGATE(idt[1],0,GD_KD,Debug,3);
+	SETGATE(idt[2],1,GD_KD,Non_MaskableInterrupt,0);
+	SETGATE(idt[3],0,GD_KD,Breakpoint,0);
+	SETGATE(idt[4],0,GD_KD,Overflow,0);
+	SETGATE(idt[5],1,GD_KD,BOUND_Range_Exceeded,0);
+	SETGATE(idt[6],0,GD_KD,Invalid_Opcode,0);
+	SETGATE(idt[7],1,GD_KD,Device_Not_Available,0);
+	SETGATE(idt[8],1,GD_KD,Double_Fault,0);
+	SETGATE(idt[10],1,GD_KD,Invalid_TSS,0);
+	SETGATE(idt[11],1,GD_KD,Segment_Not_Present,0);
+	SETGATE(idt[12],1,GD_KD,Stack_Fault,0);
+	SETGATE(idt[13],1,GD_KD,General_Protection,0);
+	SETGATE(idt[14],1,GD_KD,Page_Fault,0);
+	SETGATE(idt[16],1,GD_KD,FPU_Floating_Point_Error,0);
+	SETGATE(idt[17],1,GD_KD,Alignment_Check,0);
+	SETGATE(idt[18],1,GD_KD,Machine_Check,0);
+	SETGATE(idt[19],1,GD_KD,SIMD_Floating_Point_Exception,0);
+	SETGATE(idt[48],0,GD_KD,systemcall_handler,3);
+	
 	// LAB 3: Your code here.
 
 	// Per-CPU setup 

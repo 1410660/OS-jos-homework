@@ -11,7 +11,6 @@
 #include <kern/env.h>
 #include <kern/trap.h>
 
-
 void
 i386_init(void)
 {
@@ -39,12 +38,12 @@ i386_init(void)
 	// Don't touch -- used by grading script!
 	ENV_CREATE(TEST, ENV_TYPE_USER);
 #else
-	// Touch all you want.
+	// Touch all you want.	
 	ENV_CREATE(user_hello, ENV_TYPE_USER);
 #endif // TEST*
-
 	// We only have one user environment for now, so just run it.
 	env_run(&envs[0]);
+	//env_run(&envs[NENV-1]);
 }
 
 
