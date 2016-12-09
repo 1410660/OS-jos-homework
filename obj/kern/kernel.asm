@@ -119,9 +119,9 @@ f0100090:	e8 38 38 00 00       	call   f01038cd <trap_init>
 	ENV_CREATE(TEST, ENV_TYPE_USER);
 f0100095:	c7 44 24 08 00 00 00 	movl   $0x0,0x8(%esp)
 f010009c:	00 
-f010009d:	c7 44 24 04 62 78 00 	movl   $0x7862,0x4(%esp)
+f010009d:	c7 44 24 04 63 78 00 	movl   $0x7863,0x4(%esp)
 f01000a4:	00 
-f01000a5:	c7 04 24 95 1c 13 f0 	movl   $0xf0131c95,(%esp)
+f01000a5:	c7 04 24 b4 2b 12 f0 	movl   $0xf0122bb4,(%esp)
 f01000ac:	e8 5c 32 00 00       	call   f010330d <env_create>
 #else
 	// Touch all you want.	
@@ -7549,23 +7549,23 @@ f010403e <_alltraps>:
  * Lab 3: Your code here for _alltraps
  */
 _alltraps:
-pushw $0
+	pushw $0
 f010403e:	66 6a 00             	pushw  $0x0
-pushw %ds
+	pushw %ds
 f0104041:	66 1e                	pushw  %ds
-pushw $0
+	pushw $0
 f0104043:	66 6a 00             	pushw  $0x0
-pushw %es
+	pushw %es
 f0104046:	66 06                	pushw  %es
-pushal
+	pushal
 f0104048:	60                   	pusha  
-pushl %esp
+	pushl %esp
 f0104049:	54                   	push   %esp
-movw $(GD_KD),%ax
+	movw $(GD_KD),%ax
 f010404a:	66 b8 10 00          	mov    $0x10,%ax
-movw %ax,%ds
+	movw %ax,%ds
 f010404e:	8e d8                	mov    %eax,%ds
-movw %ax,%es
+	movw %ax,%es
 f0104050:	8e c0                	mov    %eax,%es
 f0104052:	e8 25 fe ff ff       	call   f0103e7c <trap>
 

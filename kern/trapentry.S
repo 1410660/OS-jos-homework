@@ -68,13 +68,13 @@ TRAPHANDLER_NOEC(systemcall_handler, 0x30)
  * Lab 3: Your code here for _alltraps
  */
 _alltraps:
-pushw $0
-pushw %ds
-pushw $0
-pushw %es
-pushal
-pushl %esp
-movw $(GD_KD),%ax
-movw %ax,%ds
-movw %ax,%es
-call trap
+	pushw $0
+	pushw %ds
+	pushw $0
+	pushw %es
+	pushal
+	pushl %esp
+	movw $(GD_KD),%ax
+	movw %ax,%ds
+	movw %ax,%es
+	call trap
