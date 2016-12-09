@@ -113,19 +113,18 @@ f0100086:	e8 ab 30 00 00       	call   f0103136 <env_init>
 f010008b:	90                   	nop
 f010008c:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
 f0100090:	e8 38 38 00 00       	call   f01038cd <trap_init>
-
 #if defined(TEST)
 	// Don't touch -- used by grading script!
 	ENV_CREATE(TEST, ENV_TYPE_USER);
-f0100095:	c7 44 24 08 00 00 00 	movl   $0x0,0x8(%esp)
-f010009c:	00 
-f010009d:	c7 44 24 04 63 78 00 	movl   $0x7863,0x4(%esp)
-f01000a4:	00 
-f01000a5:	c7 04 24 b4 2b 12 f0 	movl   $0xf0122bb4,(%esp)
-f01000ac:	e8 5c 32 00 00       	call   f010330d <env_create>
 #else
 	// Touch all you want.	
 	ENV_CREATE(user_hello, ENV_TYPE_USER);
+f0100095:	c7 44 24 08 00 00 00 	movl   $0x0,0x8(%esp)
+f010009c:	00 
+f010009d:	c7 44 24 04 5e 78 00 	movl   $0x785e,0x4(%esp)
+f01000a4:	00 
+f01000a5:	c7 04 24 56 b3 11 f0 	movl   $0xf011b356,(%esp)
+f01000ac:	e8 5c 32 00 00       	call   f010330d <env_create>
 #endif // TEST*
 	// We only have one user environment for now, so just run it.
 	env_run(&envs[0]);
