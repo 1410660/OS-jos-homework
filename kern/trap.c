@@ -172,11 +172,6 @@ print_regs(struct PushRegs *regs)
 	cprintf("  ecx  0x%08x\n", regs->reg_ecx);
 	cprintf("  eax  0x%08x\n", regs->reg_eax);
 }
-void
-break_point_handler(struct Trapframe *tf)
-{
-	monitor(tf);
-}
 static void
 trap_dispatch(struct Trapframe *tf)
 {
@@ -190,7 +185,7 @@ trap_dispatch(struct Trapframe *tf)
 	}
 	if(tf->tf_trapno==T_BRKPT)
 	{
-		break_point_handler(tf);
+		monitor(tf);
 		return;
 	}
 	if(tf->tf_trapno==T_SYSCALL)
@@ -255,7 +250,7 @@ page_fault_handler(struct Trapframe *tf)
 
 	// Read processor's CR2 register to find the faulting address
 	fault_va = rcr2();
-	if((tf->tf_cs & 3)==0)
+	if((tf->tf_cs & 3)==0) // last three bits 000 means DPL_Kern
 	{
 		panic("kernel mode page faults!!");
 	}

@@ -567,7 +567,28 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
-
+	size_t i;
+	struct Page* p = NULL;
+	pte_t* store;
+	for( i = (size_t)ROUNDDOWN(va,PGSIZE);i<(size_t)ROUNDUP(va+len,PGSIZE);i+=PGSIZE){
+		store = NULL;
+		if(i>=ULIM){
+			cprintf("out of boundary visiting\n");
+			user_mem_check_addr = (uintptr_t) i;
+			return -E_FAULT;
+		}
+		p = page_lookup(env->env_pgdir,(void *)i,&store);
+		if(store == NULL){
+			cprintf("not this set of page\n");
+			user_mem_check_addr = (uintptr_t) i;
+			return -E_FAULT;
+		}
+		if(((*store)&(perm | PTE_P)) != (perm | PTE_P)){
+			cprintf("no previlge visiting\n");
+			user_mem_check_addr = (uintptr_t) i;
+			return -E_FAULT;
+		}
+	}
 	return 0;
 }
 
