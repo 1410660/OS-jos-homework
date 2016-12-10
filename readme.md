@@ -1,4 +1,2 @@
-# right remained
-I remain all the right of this repository untill 2016/12/5 for that it's my homework and I don't want to be thought as cribbing , than it can be used freely by everyone.
-After that time , I will offer all my document in order to serve anyone who need it.
+lab 1 &lab2 please refer the branch lab2 
 @author by stoneboat
