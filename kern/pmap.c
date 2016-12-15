@@ -566,30 +566,37 @@ static uintptr_t user_mem_check_addr;
 int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
+
 	// LAB 3: Your code here.
-	size_t i;
-	struct Page* p = NULL;
-	pte_t* store;
-	for( i = (size_t)ROUNDDOWN(va,PGSIZE);i<(size_t)ROUNDUP(va+len,PGSIZE);i+=PGSIZE){
-		store = NULL;
-		if(i>=ULIM){
-			cprintf("out of boundary visiting\n");
-			user_mem_check_addr = (uintptr_t) i;
-			return -E_FAULT;
+	 int i=0;
+	int flag=0;
+	int t=(int)va;
+	for(i=t;i<(t+len);i+=PGSIZE)
+	{
+		pte_t* store=0;
+		struct Page* pg=page_lookup(env->env_pgdir, (void*)i, &store);
+		if(store!=NULL)
+		{
+			//cprintf("pte!=NULL %08x\r\n",*store);
+			  if((((*store) &(perm|PTE_P))!=(perm|PTE_P)) || i>ULIM)
+			   {
+				//cprintf("pte protect!\r\n");
+				flag=-E_FAULT;
+				user_mem_check_addr=(int)i;
+				break;
+			   }
+			}
+			else
+			{
+				//cprintf("no pte!\r\n");
+				flag=-E_FAULT;
+				user_mem_check_addr=(int)i;
+				break;
+			}
+		    i=ROUNDDOWN(i,PGSIZE);
 		}
-		p = page_lookup(env->env_pgdir,(void *)i,&store);
-		if(store == NULL){
-			cprintf("not this set of page\n");
-			user_mem_check_addr = (uintptr_t) i;
-			return -E_FAULT;
-		}
-		if(((*store)&(perm | PTE_P)) != (perm | PTE_P)){
-			cprintf("no previlge visiting\n");
-			user_mem_check_addr = (uintptr_t) i;
-			return -E_FAULT;
-		}
-	}
-	return 0;
+
+	return flag;
 }
 
 //
@@ -603,7 +610,7 @@ void
 user_mem_assert(struct Env *env, const void *va, size_t len, int perm)
 {
 	if (user_mem_check(env, va, len, perm | PTE_U) < 0) {
-		cprintf("[%08x] user_mem_check assertion failure for "
+		cprintf(".%08x. user_mem_check assertion failure for "
 			"va %08x\n", env->env_id, user_mem_check_addr);
 		env_destroy(env);	// may not return
 	}

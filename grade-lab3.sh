@@ -14,6 +14,7 @@ $make
 pts=10
 
 runtest1 divzero \
+	! '1/0 is ........!' \
 	'Incoming TRAP frame at 0xefbfff..' \
 	'TRAP frame at 0xf.......' \
 	'  trap 0x00000000 Divide error' \
