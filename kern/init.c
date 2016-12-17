@@ -62,21 +62,12 @@ i386_init(void)
 	// Don't touch -- used by grading script!
 	ENV_CREATE(TEST, ENV_TYPE_USER);
 #else
-<<<<<<< HEAD
 	// Touch all you want.
 	ENV_CREATE(user_primes, ENV_TYPE_USER);
 #endif // TEST*
 
 	// Schedule and run the first user environment!
 	sched_yield();
-=======
-	// Touch all you want.	
-	ENV_CREATE(user_hello, ENV_TYPE_USER);
-#endif // TEST*
-	// We only have one user environment for now, so just run it.
-	env_run(&envs[0]);
-	//env_run(&envs[NENV-1]);
->>>>>>> lab3
 }
 
 // While boot_aps is booting a given CPU, it communicates the per-core

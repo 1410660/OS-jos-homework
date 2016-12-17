@@ -337,9 +337,19 @@ page_init(void)
 
               //test output
              //cprintf(">>  ppg_start: %x\tppg_end: %x\n", (int)ppg_start, (int)ppg_end);
-
                ppg_start--;    ppg_end++;
                ppg_end->pp_link = ppg_start;
+
+               //remain the page of mp entry Code
+               extern unsigned char mpentry_start[], mpentry_end[];
+               ppg_start = pa2page((physaddr_t)MPENTRY_PADDR);      
+               ppg_end = pa2page((physaddr_t)(MPENTRY_PADDR+mpentry_end - mpentry_start));  
+               ppg_start--;    ppg_end++;
+               ppg_end->pp_link = ppg_start;
+
+               cprintf("MPENTRY_PADDR_page_start:  %d\n",PGNUM(page2pa(ppg_start)));
+               cprintf("MPENTRY_PADDR_page_end:  %d\n",PGNUM(page2pa(ppg_end)));
+               cprintf("\n");
 }
 
 //
@@ -708,7 +718,8 @@ check_page_free_list(bool only_low_memory)
 		assert(page2pa(pp) != IOPHYSMEM);
 		assert(page2pa(pp) != EXTPHYSMEM - PGSIZE);
 		assert(page2pa(pp) != EXTPHYSMEM);
-		assert(page2pa(pp) < EXTPHYSMEM || (char *) page2kva(pp) >= first_free_page);
+		assert(page2pa(pp) < EXTPHYSMEM );
+		assert((char *) page2kva(pp) >= first_free_page);
 		// (new test for lab 4)
 		assert(page2pa(pp) != MPENTRY_PADDR);
 
