@@ -299,6 +299,22 @@ mem_init_mp(void)
 void
 page_init(void)
 {
+	size_t i = 1;
+	for (i; i < npages_basemem; i++) {
+		pages[i].pp_ref = 0;
+		pages[i].pp_link = page_free_list;
+		page_free_list = &pages[i];
+	}
+
+	//cprintf("EXTPHYSMEM starts @: %p\n", EXTPHYSMEM);
+	// Pages is used after npages of struct Page is allocated
+	int start_point_of_free_page = (int)ROUNDUP(((char*)pages) + (sizeof(struct Page) * npages) + (sizeof(struct Env) * NENV) - 0xf0000000, PGSIZE)/PGSIZE;
+	//cprintf("start_point_of_free_page (including pagetable and other ds)=%x\n", start_point_of_free_page);
+ 	for(i = start_point_of_free_page; i < npages; i++) {
+		pages[i].pp_ref = 0;
+		pages[i].pp_link = page_free_list;
+		page_free_list = &pages[i];
+	}
 	// LAB 4:
 	// Change your code to mark the physical page at MPENTRY_PADDR
 	// as in use
@@ -320,7 +336,7 @@ page_init(void)
 	// Change the code to reflect this.
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
-	size_t i;
+	/*size_t i;
 	for (i = 0; i < npages; i++) {
 		pages[i].pp_ref = 0;
 		pages[i].pp_link = page_free_list;
@@ -338,18 +354,18 @@ page_init(void)
               //test output
              //cprintf(">>  ppg_start: %x\tppg_end: %x\n", (int)ppg_start, (int)ppg_end);
                ppg_start--;    ppg_end++;
-               ppg_end->pp_link = ppg_start;
+               ppg_end->pp_link = ppg_start;*/
 
                //remain the page of mp entry Code
                extern unsigned char mpentry_start[], mpentry_end[];
-               ppg_start = pa2page((physaddr_t)MPENTRY_PADDR);      
-               ppg_end = pa2page((physaddr_t)(MPENTRY_PADDR+mpentry_end - mpentry_start));  
+               struct Page *ppg_start = pa2page((physaddr_t)MPENTRY_PADDR);      
+               struct Page * ppg_end = pa2page((physaddr_t)(MPENTRY_PADDR+mpentry_end - mpentry_start));  
                ppg_start--;    ppg_end++;
                ppg_end->pp_link = ppg_start;
 
-               cprintf("MPENTRY_PADDR_page_start:  %d\n",PGNUM(page2pa(ppg_start)));
-               cprintf("MPENTRY_PADDR_page_end:  %d\n",PGNUM(page2pa(ppg_end)));
-               cprintf("\n");
+              // cprintf("MPENTRY_PADDR_page_start:  %d\n",PGNUM(page2pa(ppg_start)));
+               //cprintf("MPENTRY_PADDR_page_end:  %d\n",PGNUM(page2pa(ppg_end)));
+               //cprintf("\n");
 }
 
 //
@@ -720,17 +736,17 @@ check_page_free_list(bool only_low_memory)
 		assert(page2pa(pp) != EXTPHYSMEM - PGSIZE);
 		assert(page2pa(pp) != EXTPHYSMEM);
 		cprintf("page %d \n",PGNUM(page2pa(pp)));
-		assert(page2pa(pp) != MPENTRY_PADDR);
+		//assert((char *) page2kva(pp) >= first_free_page );
 		assert(page2pa(pp) < EXTPHYSMEM || (char *) page2kva(pp) >= first_free_page);
 		// (new test for lab 4)
-		
+		assert(page2pa(pp) != MPENTRY_PADDR);
 
 		if (page2pa(pp) < EXTPHYSMEM)
 			++nfree_basemem;
 		else
 			++nfree_extmem;
 	}
-
+	panic("stop please\n");
 	assert(nfree_basemem > 0);
 	assert(nfree_extmem > 0);
 }
