@@ -707,6 +707,7 @@ check_page_free_list(bool only_low_memory)
 			memset(page2kva(pp), 0x97, 128);
 
 	first_free_page = (char *) boot_alloc(0);
+	cprintf("EXTPHYSMEM belonging to page %d \n",PGNUM(EXTPHYSMEM));
 	for (pp = page_free_list; pp; pp = pp->pp_link) {
 		// check that we didn't corrupt the free list itself
 		assert(pp >= pages);
@@ -718,10 +719,11 @@ check_page_free_list(bool only_low_memory)
 		assert(page2pa(pp) != IOPHYSMEM);
 		assert(page2pa(pp) != EXTPHYSMEM - PGSIZE);
 		assert(page2pa(pp) != EXTPHYSMEM);
-		assert(page2pa(pp) < EXTPHYSMEM );
-		assert((char *) page2kva(pp) >= first_free_page);
-		// (new test for lab 4)
+		cprintf("page %d \n",PGNUM(page2pa(pp)));
 		assert(page2pa(pp) != MPENTRY_PADDR);
+		assert(page2pa(pp) < EXTPHYSMEM || (char *) page2kva(pp) >= first_free_page);
+		// (new test for lab 4)
+		
 
 		if (page2pa(pp) < EXTPHYSMEM)
 			++nfree_basemem;
