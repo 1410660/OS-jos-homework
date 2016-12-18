@@ -119,11 +119,14 @@ env_init(void)
 {
 	// Set up envs array
 	// LAB 3: Your code here.
-	size_t i;
-	for (i = 0; i < NENV; i++) {
+	env_free_list = NULL;
+	size_t i = NENV - 1;
+	cprintf("%d\n",i);
+	while(i+1) {
 		envs[i].env_id = 0;
 		envs[i].env_link = env_free_list;
 		env_free_list = &envs[i];
+		i = i-1;
 	}
 	//env_free_list = envs; // this line of code changing like this ugly looks just fit fuck grade sh,too useless
 	// Per-CPU part of the initialization
@@ -460,7 +463,9 @@ env_free(struct Env *e)
 
 	// return the environment to the free list
 	e->env_status = ENV_FREE;
-	e->env_link = env_free_list;
+	env_free_list->env_link = e;
+	e->env_link = NULL;
+	//e->env_link = env_free_list;
 	env_free_list = e;
 }
 
