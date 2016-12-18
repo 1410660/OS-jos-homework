@@ -185,9 +185,9 @@ mem_init(void)
 	//      (ie. perm = PTE_U | PTE_P)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
-	size_t i;
-	for (i = 0; i < ROUNDUP(npages*sizeof(struct Page), PGSIZE); i += PGSIZE)
-		page_insert(kern_pgdir, pa2page(PADDR(pages) + i), (void *)(UPAGES + i), PTE_U);
+	size_t to_map_pages;
+	to_map_pages = (sizeof(struct Page) * npages - 1) / PGSIZE + 1;
+	boot_map_region(kern_pgdir, UPAGES, to_map_pages * PGSIZE, PADDR(pages), PTE_U | PTE_P);
 
 	//////////////////////////////////////////////////////////////////////
 	// Map the 'envs' array read-only by the user at linear address UENVS
@@ -196,8 +196,9 @@ mem_init(void)
 	//    - the new image at UENVS  -- kernel R, user R
 	//    - envs itself -- kernel RW, user NONE
 	// LAB 3: Your code here.
+	size_t i;
 	for(i = 0;i<ROUNDUP(NENV*sizeof(struct Env),PGSIZE);i+=PGSIZE)
-		page_insert(kern_pgdir,pa2page(PADDR(envs)+i),(void *)(UENVS + i),PTE_U);
+		page_insert(kern_pgdir,pa2page(PADDR(envs)+i),(void *)(UENVS + i),PTE_U| PTE_P);
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
 	// stack.  The kernel stack grows down from virtual address KSTACKTOP.
@@ -210,7 +211,9 @@ mem_init(void)
 	//     Permissions: kernel RW, user NONE
 	// Your code goes here:
 	for (i = 0; i < KSTKSIZE; i += PGSIZE)
-		page_insert(kern_pgdir, pa2page(PADDR(bootstack) + i), (void *)(KSTACKTOP-KSTKSIZE + i), PTE_W);
+		page_insert(kern_pgdir, pa2page(PADDR(bootstack) + i), (void *)(KSTACKTOP-KSTKSIZE + i), PTE_W| PTE_P);
+	/*size_t to_map = KSTKSIZE / PGSIZE;
+	boot_map_region(kern_pgdir, KSTACKTOP - KSTKSIZE, KSTKSIZE, PADDR(bootstack), PTE_W | PTE_P);*/
 
 	//////////////////////////////////////////////////////////////////////
 	// Map all of physical memory at KERNBASE.
@@ -221,9 +224,11 @@ mem_init(void)
 	// Permissions: kernel RW, user NONE
 	// Your code goes here:
 	for (i = 0; i < 0xFFFFFFFF - KERNBASE; i += PGSIZE) {
-		page_insert(kern_pgdir, pa2page(i % (npages*PGSIZE)), (void *)(KERNBASE + i), PTE_W);
+		page_insert(kern_pgdir, pa2page(i % (npages*PGSIZE)), (void *)(KERNBASE + i), PTE_W| PTE_P);
 		pa2page(i % (npages*PGSIZE))->pp_ref--;                 //this statement is to keep pp_ref == 0 in page_free_list
 	}
+	/*size_t to_map_kernbase = (~0u- KERNBASE) / PGSIZE;
+	boot_map_region(kern_pgdir, KERNBASE, to_map_kernbase * PGSIZE, 0, PTE_W | PTE_P);*/
 
 	// Initialize the SMP-related parts of the memory map
 	mem_init_mp();
@@ -239,9 +244,7 @@ mem_init(void)
 	// If the machine reboots at this point, you've probably set up your
 	// kern_pgdir wrong.
 	lcr3(PADDR(kern_pgdir));
-
 	check_page_free_list(0);
-
 	// entry.S set the really important flags in cr0 (including enabling
 	// paging).  Here we configure the rest of the flags that we care about.
 	cr0 = rcr0();
@@ -264,7 +267,6 @@ mem_init_mp(void)
 	// Create a direct mapping at the top of virtual address space starting
 	// at IOMEMBASE for accessing the LAPIC unit using memory-mapped I/O.
 	boot_map_region(kern_pgdir, IOMEMBASE, -IOMEMBASE, IOMEM_PADDR, PTE_W);
-
 	// Map per-CPU stacks starting at KSTACKTOP, for up to 'NCPU' CPUs.
 	//
 	// For CPU i, use the physical memory that 'percpu_kstacks[i]' refers
@@ -281,7 +283,15 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
-
+	int i;
+	physaddr_t cpu_phystk_i;
+	uintptr_t cpu_vastk_i;
+	size_t va;
+	for(i = 0 ; i<NCPU ;i++){
+		cpu_vastk_i = KSTACKTOP - i* (KSTKSIZE + KSTKGAP)-KSTKSIZE;
+		cpu_phystk_i = PADDR(percpu_kstacks[i]);
+		boot_map_region(kern_pgdir,cpu_vastk_i,KSTKSIZE,cpu_phystk_i,PTE_W);
+	}
 }
 
 // --------------------------------------------------------------
@@ -481,6 +491,15 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 static void
 boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm)
 {
+	size_t i = 0;
+	pte_t * pgEntry;
+	for(i;i<(size/PGSIZE);i++){
+		pgEntry = pgdir_walk(pgdir,(void*)(va+i*PGSIZE),1);
+		if(pgEntry==NULL){
+			panic("kern page not allocated!\n");
+		}
+		(*pgEntry) = PTE_ADDR(pa + PGSIZE * i) | perm | PTE_P;
+	}
 	// Fill this function in
 }
 
@@ -723,7 +742,6 @@ check_page_free_list(bool only_low_memory)
 			memset(page2kva(pp), 0x97, 128);
 
 	first_free_page = (char *) boot_alloc(0);
-	cprintf("EXTPHYSMEM belonging to page %d \n",PGNUM(EXTPHYSMEM));
 	for (pp = page_free_list; pp; pp = pp->pp_link) {
 		// check that we didn't corrupt the free list itself
 		assert(pp >= pages);
@@ -735,7 +753,6 @@ check_page_free_list(bool only_low_memory)
 		assert(page2pa(pp) != IOPHYSMEM);
 		assert(page2pa(pp) != EXTPHYSMEM - PGSIZE);
 		assert(page2pa(pp) != EXTPHYSMEM);
-		cprintf("page %d \n",PGNUM(page2pa(pp)));
 		//assert((char *) page2kva(pp) >= first_free_page );
 		assert(page2pa(pp) < EXTPHYSMEM || (char *) page2kva(pp) >= first_free_page);
 		// (new test for lab 4)
@@ -746,7 +763,6 @@ check_page_free_list(bool only_low_memory)
 		else
 			++nfree_extmem;
 	}
-	panic("stop please\n");
 	assert(nfree_basemem > 0);
 	assert(nfree_extmem > 0);
 }

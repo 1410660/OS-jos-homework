@@ -125,7 +125,7 @@ env_init(void)
 		envs[i].env_link = env_free_list;
 		env_free_list = &envs[i];
 	}
-	env_free_list = envs; // this line of code changing like this ugly looks just fit fuck grade sh,too useless
+	//env_free_list = envs; // this line of code changing like this ugly looks just fit fuck grade sh,too useless
 	// Per-CPU part of the initialization
 	env_init_percpu();
 }
@@ -215,12 +215,15 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	int r;
 	struct Env *e;
 
-	if (!(e = env_free_list))
+	if (!(e = env_free_list)){
+		cprintf("no free envs: %d \n",-E_NO_FREE_ENV);
 		return -E_NO_FREE_ENV;
+	}
 
 	// Allocate and set up the page directory for this environment.
-	if ((r = env_setup_vm(e)) < 0)
+	if ((r = env_setup_vm(e)) < 0){
 		return r;
+	}
 
 	// Generate an env_id for this environment.
 	generation = (e->env_id + (1 << ENVGENSHIFT)) & ~(NENV - 1);
@@ -399,11 +402,12 @@ env_create(uint8_t *binary, size_t size, enum EnvType type)
 {
 	// LAB 3: Your code here.
 	struct Env * env;
-	if(env_alloc(&env,0)==0){
+	int test = env_alloc(&env,0);
+	if(test==0){
 		load_icode(env,binary,size);
 		env->env_type = type;
 	}else{
-		panic("create env fails !");
+		panic("create env fails !\n");
 	}
 }
 
@@ -540,6 +544,7 @@ env_run(struct Env *e)
 	e->env_status = ENV_RUNNING;
 	e->env_runs++;
 	lcr3(PADDR(e->env_pgdir));
+	unlock_kernel();
 	env_pop_tf(&e->env_tf);
 	// LAB 3: Your code here.
 
