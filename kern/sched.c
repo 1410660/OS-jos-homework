@@ -4,7 +4,10 @@
 #include <kern/pmap.h>
 #include <kern/monitor.h>
 
-
+void test_func(){
+	if(cpunum()>1000)
+		env_run(0);
+}
 // Choose a user environment to run and run it.
 void
 sched_yield(void)
@@ -49,5 +52,6 @@ sched_yield(void)
 	idle = &envs[cpunum()];
 	if (!(idle->env_status == ENV_RUNNABLE || idle->env_status == ENV_RUNNING))
 		panic("CPU %d: No idle environment!", cpunum());
+	test_func();
 	env_run(idle);
 }

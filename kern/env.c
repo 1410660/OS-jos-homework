@@ -121,7 +121,6 @@ env_init(void)
 	// LAB 3: Your code here.
 	env_free_list = NULL;
 	size_t i = NENV - 1;
-	cprintf("%d\n",i);
 	while(i+1) {
 		envs[i].env_id = 0;
 		envs[i].env_link = env_free_list;
@@ -219,7 +218,6 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	struct Env *e;
 
 	if (!(e = env_free_list)){
-		cprintf("no free envs: %d \n",-E_NO_FREE_ENV);
 		return -E_NO_FREE_ENV;
 	}
 
@@ -463,9 +461,7 @@ env_free(struct Env *e)
 
 	// return the environment to the free list
 	e->env_status = ENV_FREE;
-	env_free_list->env_link = e;
-	e->env_link = NULL;
-	//e->env_link = env_free_list;
+	e->env_link = env_free_list;
 	env_free_list = e;
 }
 
