@@ -103,7 +103,7 @@ spin_unlock(struct spinlock *lk)
 		}
 		panic("spin_unlock");
 	}
-
+	
 	lk->pcs[0] = 0;
 	lk->cpu = 0;
 #endif
@@ -118,4 +118,5 @@ spin_unlock(struct spinlock *lk)
 	// The xchg being asm volatile ensures gcc emits it after
 	// the above assignments (and after the critical section).
 	xchg(&lk->locked, 0);
+
 }

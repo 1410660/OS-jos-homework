@@ -118,7 +118,6 @@ trap_init_percpu(void)
 {
 	struct Taskstate* this_ts = &thiscpu->cpu_ts;
 	int CPUID = cpunum();
-
 	this_ts->ts_esp0 = KSTACKTOP - CPUID * (KSTKGAP + KSTKSIZE);
 	this_ts->ts_ss0 = GD_KD;
 
@@ -225,7 +224,7 @@ static void
 trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
-	print_trapframe(tf);
+	//print_trapframe(tf);
 	// LAB 3: Your code here.
 
 	// Handle spurious interrupts
@@ -285,14 +284,16 @@ trap(struct Trapframe *tf)
 	// the interrupt path.
 	assert(!(read_eflags() & FL_IF));
 	
-	cprintf("Incoming TRAP frame at %p\n", tf);
+	//cprintf("Incoming TRAP frame at %p\n", tf);
 
 	if ((tf->tf_cs & 3) == 3) {
 		// Trapped from user mode.
 		// Acquire the big kernel lock before doing any
 		// serious kernel work.
 		// LAB 4: Your code here.
-		lock_kernel();
+		if(tf->tf_cs!=GD_KT){
+			lock_kernel();
+		}
 		assert(curenv);
 
 		// Garbage collect if current enviroment is a zombie
