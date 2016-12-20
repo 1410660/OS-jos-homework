@@ -48,6 +48,23 @@ void machinecheck_handler();
 void SIMDFPexception_handler();
 void systemcall_handler();
 
+extern void t_irq0();
+extern void t_irq1();
+extern void t_irq2();
+extern void t_irq3();
+extern void t_irq4();
+extern void t_irq5();
+extern void t_irq6();
+extern void t_irq7();
+extern void t_irq8();
+extern void t_irq9();
+extern void t_irq10();
+extern void t_irq11();
+extern void t_irq12();
+extern void t_irq13();
+extern void t_irq14();
+extern void t_irq15();
+
 static const char *trapname(int trapno)
 {
 	static const char * const excnames[] = {
@@ -108,6 +125,22 @@ trap_init(void)
 	SETGATE(idt[48], 0, GD_KT, systemcall_handler, 3);
 	// LAB 3: Your code here.
 
+	SETGATE(idt[IRQ_OFFSET + 0], 0, GD_KT, t_irq0, 0);
+	SETGATE(idt[IRQ_OFFSET + 1], 0, GD_KT, t_irq1, 0);
+	SETGATE(idt[IRQ_OFFSET + 2], 0, GD_KT, t_irq2, 0);
+	SETGATE(idt[IRQ_OFFSET + 3], 0, GD_KT, t_irq3, 0);
+	SETGATE(idt[IRQ_OFFSET + 4], 0, GD_KT, t_irq4, 0);
+	SETGATE(idt[IRQ_OFFSET + 5], 0, GD_KT, t_irq5, 0);
+	SETGATE(idt[IRQ_OFFSET + 6], 0, GD_KT, t_irq6, 0);
+	SETGATE(idt[IRQ_OFFSET + 7], 0, GD_KT, t_irq7, 0);
+	SETGATE(idt[IRQ_OFFSET + 8], 0, GD_KT, t_irq8, 0);
+	SETGATE(idt[IRQ_OFFSET + 9], 0, GD_KT, t_irq9, 0);
+	SETGATE(idt[IRQ_OFFSET + 10], 0, GD_KT, t_irq10, 0);
+	SETGATE(idt[IRQ_OFFSET + 11], 0, GD_KT, t_irq11, 0);
+	SETGATE(idt[IRQ_OFFSET + 12], 0, GD_KT, t_irq12, 0);
+	SETGATE(idt[IRQ_OFFSET + 13], 0, GD_KT, t_irq13, 0);
+	SETGATE(idt[IRQ_OFFSET + 14], 0, GD_KT, t_irq14, 0);
+	SETGATE(idt[IRQ_OFFSET + 15], 0, GD_KT, t_irq15, 0);
 	// Per-CPU setup 
 	trap_init_percpu();
 }
@@ -291,9 +324,9 @@ trap(struct Trapframe *tf)
 		// Acquire the big kernel lock before doing any
 		// serious kernel work.
 		// LAB 4: Your code here.
-		if(tf->tf_cs!=GD_KT){
-			lock_kernel();
-		}
+		//if(tf->tf_cs!=GD_KT){
+		lock_kernel();
+		//}
 		assert(curenv);
 
 		// Garbage collect if current enviroment is a zombie
@@ -335,10 +368,8 @@ page_fault_handler(struct Trapframe *tf)
 
 	// Read processor's CR2 register to find the faulting address
 	fault_va = rcr2();
-	if((tf->tf_cs & 3)==0) // last three bits 000 means DPL_Kern
-	{
-		panic("kernel mode page faults!!");
-	}
+	if((tf->tf_cs & 0x3) != 3)
+		panic("page_fault_handler(): page fault at kernel-mode !");
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
@@ -375,10 +406,35 @@ page_fault_handler(struct Trapframe *tf)
 	//   (the 'tf' variable points at 'curenv->env_tf').
 
 	// LAB 4: Your code here.
-
-	// Destroy the environment that caused the fault.
-	cprintf("[%08x] user fault va %08x ip %08x\n",
+	if(curenv->env_pgfault_upcall == NULL){
+		// Destroy the environment that caused the fault.
+		cprintf("[%08x] user fault va %08x ip %08x\n",
 		curenv->env_id, fault_va, tf->tf_eip);
-	//print_trapframe(tf);
-	env_destroy(curenv);
+		print_trapframe(tf);
+		env_destroy(curenv);
+	}
+
+	struct UTrapframe* utf;
+	if(UXSTACKTOP - PGSIZE <= tf->tf_esp && tf->tf_esp < UXSTACKTOP) // an page_fault from user exception stack
+	{
+		utf = (struct UTrapframe*) (tf->tf_esp - sizeof (struct UTrapframe) - sizeof(uint32_t));
+	}
+	else // an page_fault from normal user space
+	{
+		utf = (struct UTrapframe*) (UXSTACKTOP - sizeof(struct UTrapframe));
+	}
+	user_mem_assert(curenv, (void*) utf, sizeof (struct UTrapframe), PTE_U | PTE_W);
+	
+	// setup a stack
+	utf->utf_eflags = tf->tf_eflags;
+	utf->utf_eip = tf->tf_eip;
+	utf->utf_esp = tf->tf_esp;
+	utf->utf_regs = tf->tf_regs;
+	utf->utf_err = tf->tf_err;
+	utf->utf_fault_va = fault_va;
+
+	curenv->env_tf.tf_eip = (uint32_t)curenv->env_pgfault_upcall;
+	curenv->env_tf.tf_esp = (uint32_t)utf;
+
+	env_run(curenv);
 }
