@@ -268,7 +268,11 @@ trap_dispatch(struct Trapframe *tf)
 		print_trapframe(tf);
 		return;
 	}
-
+	if (tf->tf_trapno == IRQ_OFFSET + IRQ_TIMER) {
+        		lapic_eoi();
+        		sched_yield();
+      	  return;
+  	  }
 	// Handle clock interrupts. Don't forget to acknowledge the
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 4: Your code here.
@@ -315,7 +319,7 @@ trap(struct Trapframe *tf)
 	// Check that interrupts are disabled.  If this assertion
 	// fails, DO NOT be tempted to fix it by inserting a "cli" in
 	// the interrupt path.
-	assert(!(read_eflags() & FL_IF));
+	//assert(!(read_eflags() & FL_IF));
 	
 	//cprintf("Incoming TRAP frame at %p\n", tf);
 
