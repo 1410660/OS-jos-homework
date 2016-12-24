@@ -4,7 +4,6 @@
 #include <kern/pmap.h>
 #include <kern/monitor.h>
 
-
 // Choose a user environment to run and run it.
 void
 sched_yield(void)
@@ -18,6 +17,22 @@ sched_yield(void)
 	// circular fashion starting just after the env this CPU was
 	// last running.  Switch to the first such environment found.
 	//
+	int start;
+	struct Env * curr = thiscpu->cpu_env;
+	if(curr == NULL){
+		start = 0;
+	}else{
+		start = ENVX(curr->env_id ) ;
+	}
+	for(i=1;i<NENV;i++){
+		start = (start+1) % NENV;
+		if (envs[start].env_type != ENV_TYPE_IDLE && (envs[start].env_status == ENV_RUNNABLE )){
+			env_run(&envs[start]);
+		}
+	}
+	 if (curr && curr->env_status == ENV_RUNNING) {
+       		 env_run(curr);
+   	 }
 	// If no envs are runnable, but the environment previously
 	// running on this CPU is still ENV_RUNNING, it's okay to
 	// choose that environment.
