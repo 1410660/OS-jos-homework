@@ -80,8 +80,9 @@ flush_block(void *addr)
 		panic("flush_block of bad va %08x", addr);
 
 	// LAB 5: Your code here.
+	addr = ROUNDDOWN (addr, PGSIZE);
+	//trap in a big HOLE !!!!!  not actually wondering va_is_mapped how to work ,  vpd mapped PAGISIZE in unit , if you don't page alligned the addr , can't preciselly check what addr cpu marked as dirty
 	if(va_is_mapped(addr)&&va_is_dirty(addr)){
-		uint32_t blockno = ((uint32_t)addr - DISKMAP) / BLKSIZE;
 		int ret;
 		if ((ret = ide_write(blockno*BLKSECTS, ROUNDDOWN(addr, PGSIZE), BLKSECTS)) < 0)
 			panic("error reading from disk: %e", ret);
