@@ -95,6 +95,14 @@ devfile_flush(struct Fd *fd)
 static ssize_t
 devfile_read(struct Fd *fd, void *buf, size_t n)
 {
+	fsipcbuf.read.req_fileid = fd->fd_file.id;
+	fsipcbuf.read.req_n = n;
+
+	int r;
+	if ((r = fsipc (FSREQ_READ, NULL)) < 0)		
+		return r;
+	memmove (buf, fsipcbuf.readRet.ret_buf, r);//把读取到的r个字节放到真正的要存储这些字节的地址上
+	return r;
 	// Make an FSREQ_READ request to the file system server after
 	// filling fsipcbuf.read with the request arguments.  The
 	// bytes read will be written back to fsipcbuf by the file
@@ -116,7 +124,12 @@ devfile_write(struct Fd *fd, const void *buf, size_t n)
 	// remember that write is always allowed to write *fewer*
 	// bytes than requested.
 	// LAB 5: Your code here
-	panic("devfile_write not implemented");
+	int r;
+    	fsipcbuf.write.req_fileid = fd->fd_file.id;
+    	fsipcbuf.write.req_n = n < PGSIZE ? n: PGSIZE;
+    	memmove(fsipcbuf.write.req_buf, buf, fsipcbuf.write.req_n);
+    	r = fsipc(FSREQ_WRITE, NULL);
+    	return r;
 }
 
 static int
