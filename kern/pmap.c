@@ -530,9 +530,6 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 int
 page_insert(pde_t *pgdir, struct Page *pp, void *va, int perm)
 {
-	// Fill this function in
-	//test output
-                                //cprintf(">>  page_insert() was called!\n");
     
                struct Page *page = page_lookup(pgdir, va, NULL);
                pte_t *pte;

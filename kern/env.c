@@ -354,9 +354,43 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	//  You must also do something with the program's entry point,
 	//  to make sure that the environment starts executing there.
 	//  What?  (See env_run() and env_pop_tf() below.)
+	 lcr3(PADDR(e->env_pgdir));
 
-	// LAB 3: Your code here.
-	lcr3(PADDR(e->env_pgdir));
+    	struct Elf* ELFHDR = (struct Elf*)binary;
+
+    	assert(ELFHDR->e_magic == ELF_MAGIC);
+
+   	 struct Proghdr *ph, *eph;
+
+   	 uint8_t* p_src = NULL, *p_dst = NULL;
+    	uint32_t cnt = 0;
+
+    	ph = (struct Proghdr *) (binary + ELFHDR->e_phoff);
+    	eph = ph + ELFHDR->e_phnum;
+
+    	for(; ph < eph; ph++)
+   	 {
+        		if(ph->p_type == ELF_PROG_LOAD)
+        		{
+            			region_alloc(e, (void*)ph->p_va, ph->p_memsz);
+           			 memmove((void*)ph->p_va, (void*)binary + ph->p_offset, ph->p_filesz);
+       		 }
+   	 }
+    	e->env_tf.tf_eip = ELFHDR->e_entry;
+    	// Now map one page for the program's initial stack
+    	// at virtual address USTACKTOP - PGSIZE.
+
+    	// LAB 3: Your code here.
+    	struct Page* stack_page = (struct Page*)page_alloc(1);
+   	if(stack_page == 0)
+        		panic("load_icode(): %e", -E_NO_MEM);
+        	//cprintf("except page_insert Complete in env_create\n");
+	//readline("type_anything\n");
+    	page_insert(e->env_pgdir, stack_page, (void*)(USTACKTOP - PGSIZE), PTE_W | PTE_U);
+
+    	lcr3(PADDR(kern_pgdir));
+
+	/*lcr3(PADDR(e->env_pgdir));
 	struct Elf* ELFHDR = (struct Elf *) binary;
 	if(ELFHDR->e_magic != ELF_MAGIC)
 		panic("Invalid ELF format !");
@@ -377,17 +411,15 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 				va[i] = binary[ph->p_offset + i];
 		}
 	}
-	//set programe entry
 	e->env_tf.tf_eip = ELFHDR->e_entry;
-	// Now map one page for the program's initial stack
-	// at virtual address USTACKTOP - PGSIZE.
 
-	// LAB 3: Your code here.
 	struct Page* stackPage = (struct Page*)page_alloc(1);
 	if(stackPage == NULL)
 		panic("Out of memory!");
 	page_insert(e->env_pgdir,stackPage,(void*)USTACKTOP - PGSIZE,PTE_U|PTE_W);
-	lcr3(PADDR(kern_pgdir));
+	lcr3(PADDR(kern_pgdir));*/
+	//cprintf("finish in env_create\n");
+	//readline("type_anything\n");
 }
 
 //

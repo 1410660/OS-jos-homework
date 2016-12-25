@@ -55,11 +55,16 @@ i386_init(void)
 
 	// Should always have idle processes at first.
 	int i;
-	for (i = 0; i < NCPU; i++){
+	cprintf("create idle env  \n:");
+	ENV_CREATE(user_idle, ENV_TYPE_IDLE);
+
+	/*for (i = 0; i < NCPU; i++){
+		//cprintf("create idle env %d \n:",i);
 		ENV_CREATE(user_idle, ENV_TYPE_IDLE);
-	}
+	}*/
 
 	// Start fs.
+	cprintf("create fs env  \n:");
 	ENV_CREATE(fs_fs, ENV_TYPE_FS);
 
 #if defined(TEST)
@@ -70,12 +75,13 @@ i386_init(void)
 	/*for (i = 0; i < NCPU; i++){
 		ENV_CREATE(user_dumbfork,ENV_TYPE_USER);
 	}*/
-	ENV_CREATE(user_yield, ENV_TYPE_USER);
+	//ENV_CREATE(user_yield, ENV_TYPE_USER);
 	/*ENV_CREATE(user_yield, ENV_TYPE_USER);*/
 	// Touch all you want.
 	// ENV_CREATE(user_writemotd, ENV_TYPE_USER);
 	// ENV_CREATE(user_testfile, ENV_TYPE_USER);
-	// ENV_CREATE(user_icode, ENV_TYPE_USER);
+	cprintf("create icode env \n:");
+	ENV_CREATE(user_icode, ENV_TYPE_USER);
 
 #endif // TEST*
 

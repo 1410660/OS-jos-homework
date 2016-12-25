@@ -134,6 +134,16 @@ sys_env_set_trapframe(envid_t envid, struct Trapframe *tf)
 	// LAB 5: Your code here.
 	// Remember to check whether the user has supplied us with a good
 	// address!
+	int re;
+	struct Env* env;
+	re=envid2env(envid,&env,1);
+	if(re<0)
+		return re;
+	user_mem_assert(env, tf, sizeof(struct Trapframe),0);
+	env->env_tf = *tf;
+	env->env_tf.tf_eflags|= FL_IF;//interrupts enabled
+	env->env_tf.tf_cs = GD_UT | 3;//protection level 3
+	return 0;
 	panic("sys_env_set_trapframe not implemented");
 }
 
